@@ -1,0 +1,10 @@
+{
+    "users":[
+        {
+            "name":"Adam Lipový",
+            "password":"12345",
+            "power":4,
+            "new":false
+        }
+    ]
+}
