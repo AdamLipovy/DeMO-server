@@ -10,7 +10,8 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen(5)
 
-subfolders = next(os.walk('.'))[1]
+folders = next(os.walk('.'))[1]
+subfolders = []
 
 """def commands():
     while True:
@@ -30,13 +31,6 @@ subfolders = next(os.walk('.'))[1]
 thread = threading.Thread(target=commands)
 thread.start()"""
 
-for index in range(len(subfolders)):
-    subfolders[index] = subfolders[index].replace('./', '')
-
-for subfolder in subfolders:
-    if "." in subfolder or subfolder == "utility":
-        subfolders.remove(subfolder)
-
 dataBase = {}
 def makeDataBase():
     print(subfolders)
@@ -54,11 +48,13 @@ def makeDataBase():
         dataBase[classes] = userData
 
 userData = {}
-for folder in subfolders:
+for folder in folders:
     try:
-        print(folder)
+        
         with open((folder + "\\users.json"), encoding='utf-8') as fh:
             userData[folder] = json.load(fh)
+        print(folder)
+        subfolders.append(folder.replace('./', ''))
     except:
         pass
 
