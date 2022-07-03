@@ -12,7 +12,7 @@ s.listen(5)
 
 subfolders = next(os.walk('.'))[1]
 
-def commands():
+"""def commands():
     while True:
         command = str(input())
         if command == 'list':
@@ -25,7 +25,7 @@ def commands():
             if command == 'y' or command == 'yes':
                 users.clear()
         if command == 'get file':
-            print(dataBase)
+            print(dataBase)"""
 
 thread = threading.Thread(target=commands)
 thread.start()
