@@ -25,10 +25,10 @@ subfolders = next(os.walk('.'))[1]
             if command == 'y' or command == 'yes':
                 users.clear()
         if command == 'get file':
-            print(dataBase)"""
+            print(dataBase)
 
 thread = threading.Thread(target=commands)
-thread.start()
+thread.start()"""
 
 
 
