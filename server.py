@@ -30,14 +30,17 @@ subfolders = next(os.walk('.'))[1]
 thread = threading.Thread(target=commands)
 thread.start()"""
 
-
-
 for index in range(len(subfolders)):
     subfolders[index] = subfolders[index].replace('./', '')
 
+for subfolder in subfolders:
+    if "." in subfolder or subfolder == "utility":
+        subfolders.remove(subfolder)
+
 dataBase = {}
 def makeDataBase():
-    for classes in ['OC']:
+    print(subfolders)
+    for classes in subfolders:
         users = next(os.walk(str("./" + classes)))[1]
         userData = {}    
         for user in users:        
