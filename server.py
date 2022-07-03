@@ -3,7 +3,7 @@ import json
 import threading
 import os
 
-HOST = '' 
+HOST = '0.0.0.0'
 PORT = 65432
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -13,7 +13,7 @@ s.listen(5)
 folders = next(os.walk('.'))[1]
 subfolders = []
 
-"""def commands():
+def commands():
     while True:
         command = str(input())
         if command == 'list':
@@ -29,7 +29,7 @@ subfolders = []
             print(dataBase)
 
 thread = threading.Thread(target=commands)
-thread.start()"""
+thread.start()
 
 dataBase = {}
 def makeDataBase():
