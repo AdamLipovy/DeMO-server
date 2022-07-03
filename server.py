@@ -52,9 +52,12 @@ def makeDataBase():
 
 userData = {}
 for folder in subfolders:
-    print(folder)
-    with open((folder + "\\users.json"), encoding='utf-8') as fh:
-        userData[folder] = json.load(fh)
+    try:
+        print(folder)
+        with open((folder + "\\users.json"), encoding='utf-8') as fh:
+            userData[folder] = json.load(fh)
+    except:
+        pass
 
 def auth(client, data):
     print(client)
@@ -143,7 +146,7 @@ def data_decode(user, userData):
 def received():
     makeDataBase()
     print('server is running ...')
-    while True:        
+    while True:
         user, address = s.accept()
         print(f'connection established with {str(address)}')
         users.append(user)
