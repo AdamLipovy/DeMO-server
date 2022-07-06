@@ -1,4 +1,4 @@
-import socket 
+import socket
 import json
 import threading
 import os
@@ -12,19 +12,22 @@ s.listen(5)
 
 folders = next(os.walk('.'))[1]
 subfolders = []
+subjects = []
+
+try:
+    with open("./utility/subjects.txt", 'r', encoding='utf-8') as file:
+        f = file.read()
+        subjects = f.split('.')
+        print(subjects)
+except:
+    print('error in reading subjects')
 
 def commands():
     while True:
         command = str(input())
-        if command == 'list':
-            print(users)
         if command == 'threads':
             print(thread)
-        if command == 'clear':
-            print('do you really want to destroy all connections?')
-            command = str(input())
-            if command == 'y' or command == 'yes':
-                users.clear()
+
         if command == 'get file':
             print(dataBase)
 
@@ -36,32 +39,42 @@ def makeDataBase():
     print(subfolders)
     for classes in subfolders:
         users = next(os.walk(str("./" + classes)))[1]
-        userData = {}    
-        for user in users:        
+        userData = {}
+        for user in users:
             questions = next(os.walk(str("./" + classes + "/" + user)))[2]
             questionData = {}
-            for question in questions:                      
+            for question in questions:
                 with open("./" + classes + "/" + user + "/" + question, 'r', encoding='utf-8') as file:
-                    data = json.load(file)           
-                    questionData[(question.replace('.json',''))] = data            
+                    data = json.load(file)
+                    questionData[(question.replace('.json',''))] = data
             userData[user] = questionData
         dataBase[classes] = userData
+
 
 userData = {}
 for folder in folders:
     try:
-        
-        with open((folder + "\\users.json"), encoding='utf-8') as fh:
-            userData[folder] = json.load(fh)
         print(folder)
+        with open((folder + "/users.json"), encoding='utf-8') as fh:
+            userData[folder] = json.load(fh)
+        print(userData)
         subfolders.append(folder.replace('./', ''))
     except:
         pass
+
+users = {}
+for section in userData:
+    us = []
+    for user in userData[section]["users"]:
+        us.append(user["name"])
+    users[section] = us
+print(users)
 
 def auth(client, data):
     print(client)
     nouser = True
     try:
+        print(userData)
         for user in userData[data['class']]['users']:
             if data["name"] == user['name']:
                 if data["password"] == user['password']:
@@ -77,17 +90,18 @@ def auth(client, data):
             confirmation = client.recv(1024).decode('utf-8')
             if confirmation == "create":
                 jsonObj = []
-                with open((data['class'] + "\\users.json"), encoding='utf-8') as fh:
+                print(data['class'])
+                with open((data['class'] + "/users.json"), 'r', encoding='utf-8') as fh:
                     jsonObj = json.load(fh)
+                    print("file opened")
                     jsonObj["users"].append({'name':data['name'],'password':data['password'],'power':1,'new':True})
-                with open((data['class'] + "\\users.json"), 'w',encoding='utf-8') as fh:
+                with open((data['class'] + "/users.json"), 'w',encoding='utf-8') as fh:
                     json.dump(jsonObj, fh,indent=4)
+                    print("client added")
                 client.send('added'.encode('utf-8'))
     except:
         client.send('notAllFilled'.encode('utf-8'))
         auth(client, decoder(client.recv(1024).decode('utf-8')))
-
-users = []
 
 def decoder(data)->json:
     try:
@@ -100,47 +114,56 @@ def decoder(data)->json:
         return ({"id":0})
 
 def client_logging(user):
-    rcvddata = user.recv(1024).decode('utf-8')
+    rcvddata = user.recv(1024).decode('utf-8-sig')
     rcvddata = decoder(rcvddata)
     auth(user, rcvddata)
     data_decode(user, rcvddata)
-    
+
 def send_classes(user):
-    print(f'sending classes to {str(user)}')
     message = str(subfolders)
     user.send(message.encode('utf-8'))
 
+def send_subjects(user):
+    message = str(subjects)
+    user.send(message.encode('utf-8'))
+
+def send_students(user):
+    message = str(users)
+    user.send(message.encode('utf-8'))
+
 def data_decode(user, userData):
-    print('everything OK')   
-    try:
-        rcvddata = user.recv(1024).decode('utf-8')
-        rcvddata = decoder(rcvddata)
-        if rcvddata["id"] == 2:
-            user.send("roger".encode('utf-8'))
-            questions = rcvddata["data"]
-            for question in questions["questions"]:                    
-                jsonData = json.dumps(question['sections'], indent=4, ensure_ascii=False)
-                print(jsonData)
-                filename = (str(userData['class'] + "/" + userData['name'] + "/" + question['question'] + ".json"))
+    print('everything OK') 
+    while True:
+        try:
+            rcvddata = user.recv(1024).decode('utf-8')
+            rcvddata = decoder(rcvddata)
+            if rcvddata["id"] == 2:
+                user.send("roger".encode('utf-8'))
+                print(rcvddata)
+                questions = rcvddata["data"]
+                for question in questions["questions"]:
+                    jsonData = json.dumps(question['sections'], indent=4, ensure_ascii=False)
+                    print(jsonData)
+                    filename = (str(userData['class'] + "/" + userData['name'] + "/" + question['question'] + ".json"))
+                    os.makedirs(os.path.dirname(filename), exist_ok=True)
+                    with open(filename, "w", encoding='utf8') as f:
+                        f.write(jsonData)
+                    makeDataBase()
+            if rcvddata["id"] == 3:
+                print('sending data')
+                user.send(str(dataBase[userData['class']]).encode('utf-8'))
+                print('data sent')
+            if rcvddata["id"] == 4:
+                filename = (str("utility/report.json"))
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
-                with open(filename, "w", encoding='utf8') as f:
-                    f.write(jsonData)
-                makeDataBase()
-        if rcvddata["id"] == 3:
-            print('sending data')
-            user.send(str(dataBase[userData['class']]).encode('utf-8'))  
-        
-        if rcvddata["id"] == 4:
-            filename = (str("utility/report.json"))
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            with open(filename, mode='a+', encoding='utf8') as f:
-                jsonObj = json.load(f)
-                entry = {"class":rcvddata["class"],"name":rcvddata["name"],"question":rcvddata["question"],"reporter":rcvddata["reporter"],"classRep":rcvddata["classRep"]}
-                jsonObj.dump(jsonObj, entry)
-    except:
-        print('exception')
-        users.remove(user)
-        user.close()
+                with open(filename, mode='a+', encoding='utf8') as f:
+                    jsonObj = json.load(f)
+                    entry = {"class":rcvddata["class"],"name":rcvddata["name"],"question":rcvddata["question"],"reporter":rcvddata["reporter"],"classRep":rcvddata["classRep"]}
+                    jsonObj.dump(jsonObj, entry)
+        except:
+            print('exception')
+            user.close()
+            break
 
 def received():
     makeDataBase()
@@ -148,9 +171,9 @@ def received():
     while True:
         user, address = s.accept()
         print(f'connection established with {str(address)}')
-        users.append(user)
-        print(users)
         send_classes(user)
+        send_subjects(user)
+        send_students(user)
         thread = threading.Thread(target=client_logging,args=(user,))
         thread.start()
 
